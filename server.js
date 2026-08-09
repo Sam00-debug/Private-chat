@@ -25,7 +25,13 @@ app.get('/', (req, res) => {
 
 app.post('/send', (req, res) => {
 
-    const { user, msg, private: isPrivate, source } = req.body;
+    const {
+        user,
+        msg,
+        private: isPrivate,
+        source,
+        jobId
+    } = req.body;
 
     if (!user || !msg) {
         return res.status(400).json({
@@ -37,17 +43,13 @@ app.post('/send', (req, res) => {
         user: String(user),
         msg: String(msg),
         time: Date.now(),
+        jobId: jobId || null,
+        private: isPrivate === true,
         source: source || 'roblox'
     };
 
-    messages.push({
-    user: user,
-    msg: msg,
-    time: Date.now(),
-    jobId: req.body.jobId,
-    private: isPrivate === true,
-    source: source || 'roblox'
-});
+    messages.push(message);
+
     // Keep only the latest 100 messages
     if (messages.length > 100) {
         messages.shift();
