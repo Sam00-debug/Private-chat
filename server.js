@@ -40,8 +40,14 @@ app.post('/send', (req, res) => {
         source: source || 'roblox'
     };
 
-    messages.push(message);
-
+    messages.push({
+    user: user,
+    msg: msg,
+    time: Date.now(),
+    jobId: req.body.jobId,
+    private: isPrivate === true,
+    source: source || 'roblox'
+});
     // Keep only the latest 100 messages
     if (messages.length > 100) {
         messages.shift();
