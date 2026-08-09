@@ -25,11 +25,7 @@ app.get('/', (req, res) => {
 
 app.post('/send', (req, res) => {
 
-    const {
-        user,
-        msg,
-        source
-    } = req.body;
+    const { user, msg, private: isPrivate, source } = req.body;
 
     if (!user || !msg) {
         return res.status(400).json({
