@@ -14,7 +14,60 @@ let messages = [];
 // ==========================================
 
 app.get('/', (req, res) => {
-    res.send('Chat Server is Active!');
+    let html = `
+        <html>
+        <head>
+            <title>Chat Server Logs</title>
+            <style>
+                body {
+                    background: #111;
+                    color: #fff;
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                }
+
+                .message {
+                    padding: 10px;
+                    margin: 6px 0;
+                    background: #1d1d1d;
+                    border-radius: 6px;
+                }
+
+                .name {
+                    font-weight: bold;
+                }
+
+                .time {
+                    color: #888;
+                    font-size: 12px;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Chat Server Logs</h2>
+    `;
+
+    messages.forEach(message => {
+        html += `
+            <div class="message">
+                <span class="name">
+                    ${message.displayName || message.user}:
+                </span>
+                ${message.msg}
+                <div class="time">
+                    ${new Date(message.time).toLocaleString()}
+                    • ${message.source}
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+        </body>
+        </html>
+    `;
+
+    res.send(html);
 });
 
 
@@ -27,6 +80,7 @@ app.post('/send', (req, res) => {
 
     const {
         user,
+        displayName,
         msg,
         private: isPrivate,
         source,
@@ -41,6 +95,7 @@ app.post('/send', (req, res) => {
 
     const message = {
         user: String(user),
+        displayName: String(displayName || user),
         msg: String(msg),
         time: Date.now(),
         jobId: jobId || null,
@@ -51,7 +106,7 @@ app.post('/send', (req, res) => {
     messages.push(message);
 
     // Keep only the latest 100 messages
-    if (messages.length > 100) {
+    if (messages.length > 50) {
         messages.shift();
     }
 
