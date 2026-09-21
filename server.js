@@ -8,39 +8,19 @@ app.use(cors());
 
 let messages = [];
 
-
 // ==========================================
-// BASE ROUTE
+// BASE ROUTE (WEB LOGS)
 // ==========================================
-
 app.get('/', (req, res) => {
     let html = `
         <html>
         <head>
             <title>Chat Server Logs</title>
             <style>
-                body {
-                    background: #111;
-                    color: #fff;
-                    font-family: Arial, sans-serif;
-                    padding: 20px;
-                }
-
-                .message {
-                    padding: 10px;
-                    margin: 6px 0;
-                    background: #1d1d1d;
-                    border-radius: 6px;
-                }
-
-                .name {
-                    font-weight: bold;
-                }
-
-                .time {
-                    color: #888;
-                    font-size: 12px;
-                }
+                body { background: #111; color: #fff; font-family: Arial, sans-serif; padding: 20px; }
+                .message { padding: 10px; margin: 6px 0; background: #1d1d1d; border-radius: 6px; }
+                .name { font-weight: bold; }
+                .time { color: #888; font-size: 12px; }
             </style>
         </head>
         <body>
@@ -48,49 +28,28 @@ app.get('/', (req, res) => {
     `;
 
     messages.forEach(message => {
+        if (message.hidden) return; // Hide internal join/invite packets from web UI
         html += `
             <div class="message">
-                <span class="name">
-                    ${message.displayName || message.user}:
-                </span>
+                <span class="name">${message.displayName || message.user}:</span>
                 ${message.msg}
-                <div class="time">
-                    ${new Date(message.time).toLocaleString()}
-                    • ${message.source}
-                </div>
+                <div class="time">${new Date(message.time).toLocaleString()} • ${message.source}</div>
             </div>
         `;
     });
 
-    html += `
-        </body>
-        </html>
-    `;
-
+    html += `</body></html>`;
     res.send(html);
 });
 
-
 // ==========================================
 // SEND MESSAGE
-// Roblox OR Discord → Render
 // ==========================================
-
 app.post('/send', (req, res) => {
-
-    const {
-        user,
-        displayName,
-        msg,
-        private: isPrivate,
-        source,
-        jobId
-    } = req.body;
+    const { user, displayName, msg, private: isPrivate, source, jobId, hidden } = req.body;
 
     if (!user || !msg) {
-        return res.status(400).json({
-            error: 'Missing user or msg'
-        });
+        return res.status(400).json({ error: 'Missing user or msg' });
     }
 
     const message = {
@@ -100,52 +59,35 @@ app.post('/send', (req, res) => {
         time: Date.now(),
         jobId: jobId || null,
         private: isPrivate === true,
-        source: source || 'roblox'
+        source: source || 'roblox',
+        hidden: hidden === true
     };
 
     messages.push(message);
 
     // Keep only the latest 100 messages
-    if (messages.length > 50) {
+    if (messages.length > 100) {
         messages.shift();
     }
 
-    console.log(
-        `[${message.source}] ${message.user}: ${message.msg}`
-    );
+    console.log(`[${message.source}] ${message.user}: ${message.msg} ${message.hidden ? '(hidden)' : ''}`);
 
-    res.json({
-        success: true,
-        message: message
-    });
+    res.json({ success: true, message });
 });
-
 
 // ==========================================
 // GET NEW MESSAGES
-// Render → Roblox / Discord
 // ==========================================
-
 app.get('/messages', (req, res) => {
-
     const since = parseInt(req.query.since) || 0;
-
-    const newMessages = messages.filter(
-        message => message.time > since
-    );
-
+    const newMessages = messages.filter(message => message.time > since);
     res.json(newMessages);
 });
 
-
 // ==========================================
-// SERVER
+// SERVER BOOTSTRAP
 // ==========================================
-
 const PORT = process.env.PORT || 10000;
-
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(
-        `Chat server holding open on port ${PORT}`
-    );
+    console.log(`Chat server listening on port ${PORT}`);
 });
